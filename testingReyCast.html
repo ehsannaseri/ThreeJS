@@ -43,6 +43,7 @@
 
     let mixer = [];
     var loader = new THREE.GLTFLoader().load("Model/wolf_with_animations/scene.gltf",function (gltf) {
+            gltf.scene.children[0].children[0].children[0].children[0].children[0].children[0].children[4].visible = false;
             const model = gltf.scene;
             console.log(gltf);
             model.position.set(50,7,0);
@@ -120,7 +121,6 @@
 
         switch (wolf.dir) {
             case "a":
-                wolf.obj.targetY+=wolf.delta;
                 wolf.obj.rotation.y += wolf.delta;
                 break;
             case "d":
@@ -129,11 +129,13 @@
         }
         switch (wolf.animateNum) {
             case 2://run
-                wolf.obj.position.x-=wolf.delta*30;
+                wolf.obj.position.x-=wolf.delta*30 * Math.cos(wolf.obj.rotation.y);
+                wolf.obj.position.z+=wolf.delta*30 * Math.sin(wolf.obj.rotation.y);
                 mixer[0].update(wolf.delta);
                 break;
             case 1://walk
-                wolf.obj.position.x-=wolf.delta*10;
+                wolf.obj.position.x-=wolf.delta*10 * Math.cos(wolf.obj.rotation.y);
+                wolf.obj.position.z+=wolf.delta*10 * Math.sin(wolf.obj.rotation.y);
                 mixer[1].update(wolf.delta);
                 break;
             case 3:
