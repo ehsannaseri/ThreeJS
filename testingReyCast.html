@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Testing ReyCast</title>
+    <script src="lib/three.js"></script>
+    <script src="lib/TrackballControls.js"></script>
+    <script src="lib/GLTFLoader.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+<script>
+    let scene,camera,renderer,lights,controls,wolf;
+    camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,2000);
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    var geometry = new THREE.PlaneGeometry(100,100,100,100);
+    var material = new THREE.MeshStandardMaterial({color:0xffffff,wireframe:true});
+    var mesh = new THREE.Mesh(geometry,material);
+    mesh.rotation.x = Math.PI/2;
+    scene.add(mesh);
+
+    var amb = new THREE.AmbientLight(0xffffff,100);
+    scene.add(amb);
+
+
+    wolf = {
+        obj:null,
+        delta:0.02,
+        animateNum:0,
+        dir:'s',
+        run : false,
+        reset:function () {
+            this.animateNum = 0;
+        }
+    };
+
+    let mixer = [];
+    var loader = new THREE.GLTFLoader().load("Model/wolf_with_animations/scene.gltf",function (gltf) {
+            const model = gltf.scene;
+            console.log(gltf);
+            model.position.set(50,7,0);
+            model.scale.set(20,20,20);
+            wolf.obj = model;
+            for(let i=0;i<5;i++) {
+                mixer[i] = new THREE.AnimationMixer(model);
+                mixer[i].clipAction(gltf.animations[i]).play();
+            }
+            scene.add(wolf.obj);
+        },
+        function ( xhr ) {
+            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+        },
+        // called when loading has errors
+        function ( error ) {
+            console.log( 'An error happened' );
+        }
+    );
+    var onkeydown = function (event){
+        switch (event.key) {
+            case "w":
+                    wolf.animateNum = 1;
+                break;
+            case "d":
+                wolf.dir = 'd';
+                break;
+            case "a":
+                wolf.dir = 'a';
+                break;
+            case "Shift":
+                if(wolf.animateNum===1)
+                    wolf.animateNum = 2;
+                wolf.run = true;
+                break;
+        }
+    };
+
+    var onkeyup = function (event){
+        switch (event.key) {
+            case "w":
+                wolf.reset();
+                break;
+            case "d":
+                wolf.dir = 's';                break;
+            case "a":
+                wolf.dir = 's';
+                break;
+            case "Shift":
+                if(wolf.animateNum ===1)
+                    wolf.animateNum = 2;
+                else
+                    wolf.reset();
+                wolf.run = false;
+                break;
+        }
+    };
+    document.onkeydown = onkeydown;
+    document.onkeyup = onkeyup;
+
+    camera.position.x = 100;
+    camera.position.y = 10;
+    controls = new THREE.TrackballControls(camera,renderer.domElement);
+    var delta = 0;
+    var animate = function(){
+        requestAnimationFrame(animate);
+        delta +=0.5;
+        if(mixer!==undefined)
+            WolfControl();
+        controls.update();
+        renderer.render(scene,camera);
+    };
+    function WolfControl() {
+
+        switch (wolf.dir) {
+            case "a":
+                wolf.obj.targetY+=wolf.delta;
+                wolf.obj.rotation.y += wolf.delta;
+                break;
+            case "d":
+                wolf.obj.rotation.y -= wolf.delta;
+                break;
+        }
+        switch (wolf.animateNum) {
+            case 2://run
+                wolf.obj.position.x-=wolf.delta*30;
+                mixer[0].update(wolf.delta);
+                break;
+            case 1://walk
+                wolf.obj.position.x-=wolf.delta*10;
+                mixer[1].update(wolf.delta);
+                break;
+            case 3:
+                mixer[2].update(wolf.delta);
+                break;
+            case 4:
+                mixer[3].update(wolf.delta);
+                break;
+            case 5:
+                mixer[4].update(wolf.delta);
+                break;
+        }
+    }
+    animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load</title>
+    <script src="lib/three.js"></script>
+    <script src="lib/TrackballControls.js"></script>
+
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+
+</head>
+<body>
+<script>
+    let scene,camera,renderer,lights,controls,helpers;
+    camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,2000);
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+
+    let Geometry = [];
+    let Material = [];
+    let Mesh = [];
+    lights = [];
+    helpers = [];
+
+    //Meshs
+        Geometry[0] = new THREE.SphereGeometry(50,100,100);
+        Material[0] = new THREE.MeshStandardMaterial({color:0x0000ff});
+        Mesh[0] = new THREE.Mesh(Geometry[0],Material[0]);
+        scene.add(Mesh[0]);
+        Mesh[0].castShadow = true;
+
+
+        Geometry[1] = new THREE.PlaneGeometry(300,300,100,100);
+        Material[1] = new THREE.MeshStandardMaterial({color:0x00ff00});
+        Mesh[1] = new THREE.Mesh(Geometry[1],Material[1]);
+        Mesh[1].position.z = -50;
+        scene.add(Mesh[1]);
+        Mesh[1].receiveShadow = true;
+
+    //lights
+        lights[0] = new THREE.AmbientLight(0xffffff,1);
+        scene.add(lights[0]);
+
+        lights[1] = new THREE.DirectionalLight(0xffffff,5,1000);
+        lights[1].target = Mesh[0];
+        lights[1].position.set(100,100,100);
+        lights[1].castShadow = true;
+        lights[1].shadow.camera.near = 0.1;
+        lights[1].shadow.camera.far = 550;
+        lights[1].shadow.camera.right = 550;
+        lights[1].shadow.camera.left = -550;
+        lights[1].shadow.camera.top = 550;
+        lights[1].shadow.camera.bottom = -550;
+        lights[1].shadow.mapSize.width =1024*2;
+        lights[1].shadow.mapSize.height =1024*2;
+
+        scene.add(lights[1]);
+
+
+    //controls
+        controls = new THREE.TrackballControls(camera,renderer.domElement);
+
+    //camera
+        camera.position.z = 100;
+    //helpers
+        helpers[0] = new THREE.AxisHelper(100);
+        scene.add(helpers[0]);
+
+        helpers[1] = new THREE.PointLightHelper(lights[1],50,0xff0000);
+        scene.add(helpers[1]);
+
+        helpers[2] = new THREE.CameraHelper(lights[1].shadow.camera);
+        scene.add(helpers[2]);
+
+    let delta = 0;
+    let animate = function () {
+        delta+=0.01;
+        lights[1].position.x = Math.sin(delta)*100;
+        lights[1].position.y = Math.cos(delta)*100;
+        requestAnimationFrame( animate );
+        controls.update();
+        renderer.render( scene, camera );
+    };
+    animate();
+
+</script>
+
+
+</body>
+</html>

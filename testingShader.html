@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>shader</title>
+    <script src="lib/three.js"></script>
+    <script src="lib/TrackballControls.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+<script type="x-shader/x-vertex" id="vertexShader">
+    attribute float vertexDisplacement;
+    uniform float delta;
+    varying float vOpacity;
+    varying vec3 vUv;
+
+    void main(){
+        vUv = position;
+        vOpacity = vertexDisplacement;
+
+        vec3 p = position;
+
+        p.x += sin(vertexDisplacement) * 50.0;
+        p.y += cos(vertexDisplacement) * 50.0;
+
+
+
+        vec4 modelViewPosition = modelViewMatrix*vec4(p,1.0);
+        gl_Position = projectionMatrix * modelViewPosition;
+    }
+</script>
+
+<script type="x-shader/x-vertex" id="fragmentShader">
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+    // #I need Smoke and mirros !! anyone can help with the design?   -Harley.
+    uniform float time;
+    uniform vec2 resolution;
+
+    #define N 5
+    //nice coffee ... kind of
+    void main( void ) {
+        vec2 v=(gl_FragCoord.xy-(resolution*0.5))/min(resolution.y,resolution.x)*10.543;
+        float t=time * 0.4,r=2.24+sin(time)*1.5;
+        for (int i=1;i<N;i++){
+            float d=(668.14159265 / float(N))*(float(i)*17.660);
+            r+=length(vec2(v.y,v.x))+1.61;
+            v = vec2(v.x+cos(r+sin(r)-d)+cos(t),v.y-cos(r+sin(r)+d)+sin(t));
+            v.x*=1.04567;
+        }
+        r = (sin(r*0.05)*0.5)+0.5;
+        r = pow(r, 60.0);
+        gl_FragColor = vec4(r,pow(max(r-0.85,0.0)*8.0,4.0),pow(max(r-1.875,0.1)*5.0,4.0), 1.0 );
+    }
+</script>
+<script>
+    let renderer,scene,camera;
+    //renderer
+        renderer = new THREE.WebGLRenderer({});
+        renderer.setClearColor(0xffffff);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth,window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+    //camera
+        camera = new THREE.PerspectiveCamera(35,window.innerWidth/window.innerHeight,300,1000);
+    //scene
+        scene = new THREE.Scene();
+    //lights
+    let lights = [];
+        lights[0] = new THREE.AmbientLight(0xffffff,0.5);
+        scene.add(lights[0]);
+        lights[1] = new THREE.PointLight(0xffffff,0.5);
+        scene.add(lights[1]);
+    //mesh
+    let geometry = [];
+    let material;
+    let mesh = [];
+
+    let uniform = {
+        time:{value : 0},
+        resolution:{value:new THREE.Vector2(720,720)}
+    };
+    material = new THREE.ShaderMaterial({
+        uniforms:uniform,
+        vertexShader:document.getElementById("vertexShader").textContent,
+        fragmentShader:document.getElementById("fragmentShader").textContent,
+    });
+
+    geometry[0] = new THREE.BoxBufferGeometry(100,100,100,10,10,10);
+    mesh[0] = new THREE.Mesh(geometry[0],material);
+    mesh[0].position.z = -1000;
+    mesh[0].position.x = -100;
+    scene.add(mesh[0]);
+
+    geometry[1] = new THREE.SphereGeometry(50,20,20);
+    mesh[1] = new THREE.Mesh(geometry[1],material);
+    mesh[1].position.z = -1000;
+    mesh[1].position.x = 100;
+    scene.add(mesh[1]);
+
+    geometry[2] = new THREE.PlaneGeometry(10000,10000,100,100);
+    mesh[2] = new THREE.Mesh(geometry[2],material);
+    mesh[2].rotation.x = -90 * Math.PI/180;
+    mesh[2].position.y = -100;
+    scene.add(mesh[2]);
+
+
+    let controls = new THREE.TrackballControls(camera,renderer.domElement);
+
+    let vertexDisplacement = new Float32Array(geometry[0].attributes.position.count);
+    for (let i = 0; i <vertexDisplacement.length ; i++) {
+        vertexDisplacement[i] = Math.sin(i);
+    }
+    geometry[0].setAttribute('vertexDisplacement',new THREE.BufferAttribute(vertexDisplacement,1));
+
+    let delta = Date.now();
+    render();
+    function render() {
+        delta+=0.1;
+        mesh[0].material.uniforms.time.value = Date.now();
+        mesh[0].material.uniforms.resolution.value.x = 100;
+        mesh[0].material.uniforms.resolution.value.y = 100;
+        for(let i =0;i<vertexDisplacement.length;i++){
+            vertexDisplacement[i] = 0.5+ Math.sin(i*delta)* 0.25;
+        }
+        mesh[0].geometry.attributes.vertexDisplacement.needsUpdate = true;
+        controls.update();
+        renderer.render(scene,camera);
+        requestAnimationFrame(render);
+    }
+
+</script>
+
+</body>
+</html>

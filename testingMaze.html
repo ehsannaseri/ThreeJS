@@ -1,0 +1,59 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load</title>
+    <script src="lib/three.js"></script>
+    <script src="lib/TrackballControls.js"></script>
+    <script src="lib/Maze.js"></script>
+
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+
+</head>
+<body>
+<script>
+    var scene,camera,renderer,lights,controll;
+    camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,2000);
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    var bgLoader = new THREE.CubeTextureLoader()
+        .setPath("Model/texture/Park2/")
+        .load(['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg']);
+    bgLoader.format = THREE.RGBFormat;
+
+    var material = new THREE.MeshPhongMaterial({color:0xff0000});
+    var amb = new THREE.AmbientLight(0xffffff,50);
+    scene.add(amb);
+
+    var maze = new Maze({
+        cols: 10,         // amount of cell columns
+        rows: 10,         // amount of cell rows
+        scale: 10,        // scale of maze
+        thickness: 2,     // thickness of maze walls
+        depth: 10,        // height of maze walls
+        open: true,       // include start and end doors?
+        rnd: Math.random  // custom random sampler (between 0 and 1)
+    });
+    scene.add(new THREE.Mesh(maze.geometry,material));
+    
+    camera.position.z =100;
+    scene.background = bgLoader;
+    controll = new THREE.TrackballControls(camera,renderer.domElement);
+    var animate = function () {
+        requestAnimationFrame( animate );
+        controll.update();
+        renderer.render( scene, camera );
+    };
+    animate();
+
+</script>
+
+
+</body>
+</html>
